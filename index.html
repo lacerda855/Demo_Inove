@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inove Burguer · Hamburgueria artesanal em Samambaia Sul</title>
+<meta name="description" content="Blend na brasa, pão brioche selado na manteiga e a maionese especial da casa. Inove Burguer, em Samambaia Sul, Brasília-DF.">
+ 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script>
+  tailwind.config = { theme: { extend: {
+    colors: { ink: '#0B0B0C', card: '#141416', inove: '#E3262E', inoveDark: '#C41B23', fire: '#FF6B00', gold: '#FFB800' },
+    fontFamily: { display: ['Outfit', 'sans-serif'], sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'] }
+  } } };
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+ 
+<style>
+  html { scroll-behavior: smooth; scroll-padding-top: 5rem; }
+  body {
+    background:
+      radial-gradient(circle at top right, rgba(255,107,0,.15), transparent 25%),
+      radial-gradient(circle at bottom left, rgba(227,38,46,.14), transparent 35%),
+      #0B0B0C;
+    color: #ece8e4; overflow-x: hidden;
+  }
+  :focus-visible { outline: 2px solid #FFB800; outline-offset: 3px; }
+  .fire-text { background: linear-gradient(95deg, #FF6B00, #E3262E 70%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .glow { box-shadow: 0 0 35px -4px rgba(227,38,46,.75); }
+  .btn { transition: transform .25s ease, box-shadow .25s ease, background .25s ease, border-color .25s ease; }
+  .btn:hover { transform: translateY(-2px); }
+  .btn-red:hover { background: #C41B23; box-shadow: 0 0 34px -2px rgba(227,38,46,.8); }
+  .btn-wa:hover { box-shadow: 0 10px 26px -8px rgba(37,211,102,.6); }
+  .menu-card { transition: transform .35s ease, border-color .35s ease, box-shadow .35s ease; }
+  .menu-card:hover { transform: translateY(-6px); border-color: rgba(227,38,46,.6); box-shadow: 0 20px 44px -20px rgba(227,38,46,.5); }
+  .filter-btn { transition: all .25s ease; }
+  .filter-btn.active { background: linear-gradient(135deg, rgba(227,38,46,.2), rgba(255,107,0,.18)); border-color: rgba(255,184,0,.6); color: #fff; box-shadow: 0 12px 28px -18px rgba(227,38,46,.85); }
+  .flame { animation: flick 2.4s ease-in-out infinite; transform-origin: 50% 90%; }
+  .site-header a, .site-header button { transition: color .2s ease, opacity .2s ease, border-color .2s ease; }
+  .site-header a:hover { color: #fff; }
+  .soft-card { background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01)); }
+  .floating-cta {
+    position: fixed;
+    left: 50%;
+    bottom: 1rem;
+    transform: translateX(-50%);
+    z-index: 60;
+    width: min(92vw, 28rem);
+    background: rgba(18,19,20,.92);
+    border: 1px solid rgba(255,255,255,.08);
+    box-shadow: 0 16px 40px rgba(0,0,0,.35);
+    backdrop-filter: blur(12px);
+  }
+  .mini-cta { background: linear-gradient(135deg, rgba(227,38,46,.18), rgba(255,107,0,.06)); }
+  .offer-badge {
+    background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+    border: 1px solid rgba(255,255,255,.08);
+    box-shadow: 0 18px 30px -20px rgba(227,38,46,.8);
+  }
+  @keyframes flick { 0%,100% { transform: scale(1) rotate(0); } 40% { transform: scale(1.12) rotate(-4deg); } 70% { transform: scale(.96) rotate(3deg); } }
+  #panel[data-state="closed"] #lista button { opacity: .5; }
+  #panel #lista button[aria-pressed="true"] { border-color: #FF6B00; background: rgba(255,107,0,.12); color: #fff; }
+
+  /* Classes de animação de rolamento (Scroll Reveal) */
+  .reveal { opacity: 0; transform: translateY(35px); transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1); will-change: opacity, transform; }
+  .reveal.active { opacity: 1; transform: translateY(0); }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; } .flame { animation: none; }
+    .btn, .menu-card, .reveal { transition: none; opacity: 1; transform: none; }
+  }
+  @media (min-width: 768px) {
+    .floating-cta { display: none; }
+  }
+</style>
+</head>
+ 
+<body class="font-sans antialiased">
+ 
+<header class="site-header sticky top-0 z-50 border-b border-white/10 bg-ink/85 backdrop-blur">
+  <div class="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
+    <a href="#inicio" class="flex items-center gap-2 font-display text-xl font-extrabold tracking-tight">
+      <i class="fa-solid fa-fire flame text-fire"></i><span>INOVE <span class="text-inove">BURGUER</span></span>
+    </a>
+    <nav class="hidden gap-7 text-sm font-medium text-white/70 md:flex" aria-label="Principal">
+      <a class="transition-colors hover:text-white" href="#experiencia">Experiência 3D</a>
+      <a class="transition-colors hover:text-white" href="#cardapio">Cardápio</a>
+      <a class="transition-colors hover:text-white" href="#sobre">Sobre Nós</a>
+      <a class="transition-colors hover:text-white" href="#localizacao">Localização</a>
+    </nav>
+    <a data-wa="Olá, Inove Burguer! Quero fazer um pedido." target="_blank" rel="noopener noreferrer"
+       class="btn btn-wa inline-flex items-center gap-2 rounded-full bg-[#25D366] px-4 py-2 text-sm font-bold text-ink shadow-[0_10px_30px_rgba(37,211,102,0.25)]">
+      <i class="fa-brands fa-whatsapp text-lg"></i> Pedir no Whats
+    </a>
+  </div>
+</header>
+ 
+<main id="inicio">
+  <!-- HERO / EXPERIÊNCIA 3D -->
+  <section id="experiencia" class="relative overflow-hidden pt-6 lg:pt-12">
+    <div class="pointer-events-none absolute -right-40 top-10 h-[34rem] w-[34rem] rounded-full bg-[radial-gradient(circle,rgba(227,38,46,.28),transparent_65%)]"></div>
+    <div class="relative mx-auto grid max-w-6xl items-center gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] lg:py-16">
+ 
+      <div class="reveal">
+        <span class="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-3.5 py-1.5 text-sm font-semibold text-gold">
+          <i class="fa-brands fa-google"></i>
+          <span class="flex gap-0.5 text-xs"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></span>
+          4.9 no Google • +440 Avaliações
+        </span>
+        <h1 class="mt-6 font-display text-5xl font-extrabold leading-[1.05] sm:text-6xl">
+          O sabor que conquistou <span class="fire-text">Samambaia</span>
+        </h1>
+        <p class="mt-5 max-w-md text-lg leading-relaxed text-white/70">
+          Hamburgueria artesanal de família para família: blend assado na brasa, pão brioche selado na manteiga e a famosa Maionese Especial da Casa.
+        </p>
+        <div class="mt-8 flex flex-col gap-3 sm:flex-row">
+          <button id="btnToggle" type="button" class="btn btn-red glow inline-flex items-center justify-center gap-2 rounded-xl bg-inove px-6 py-3.5 font-bold text-white shadow-lg">
+            <i class="fa-solid fa-layer-group"></i> <span>Desmontar Burguer</span>
+          </button>
+          <a data-wa="Olá, Inove Burguer! Quero fazer um pedido." target="_blank" rel="noopener noreferrer"
+             class="btn btn-wa inline-flex items-center justify-center gap-2 rounded-xl border border-[#25D366]/60 px-6 py-3.5 font-bold text-[#25D366] hover:bg-[#25D366] hover:text-ink">
+            <i class="fa-brands fa-whatsapp text-xl"></i> Pedir no Whats
+          </a>
+        </div>
+        <ul class="mt-7 flex flex-wrap gap-x-5 gap-y-2 text-sm text-white/60">
+          <li><i class="fa-solid fa-tag mr-1.5 text-gold"></i>R$ 40 – R$ 60 por pessoa</li>
+          <li><i class="fa-solid fa-motorcycle mr-1.5 text-gold"></i>Delivery</li>
+          <li><i class="fa-solid fa-wifi mr-1.5 text-gold"></i>Wi-Fi grátis</li>
+        </ul>
+
+        <div class="mt-8 grid gap-3 sm:grid-cols-3">
+          <div class="offer-badge rounded-2xl p-4">
+            <p class="text-[10px] font-bold uppercase tracking-[0.24em] text-gold">Combo do dia</p>
+            <p class="mt-2 font-display text-2xl font-extrabold text-white">R$ 47,99</p>
+          </div>
+          <div class="offer-badge rounded-2xl p-4">
+            <p class="text-[10px] font-bold uppercase tracking-[0.24em] text-gold">Tempo médio</p>
+            <p class="mt-2 font-display text-2xl font-extrabold text-white">35 min</p>
+          </div>
+          <div class="offer-badge rounded-2xl p-4">
+            <p class="text-[10px] font-bold uppercase tracking-[0.24em] text-gold">Entrega</p>
+            <p class="mt-2 font-display text-2xl font-extrabold text-white">Samambaia</p>
+          </div>
+        </div>
+      </div>
+ 
+      <div class="reveal grid gap-4 sm:grid-cols-[minmax(0,1fr)_15rem]" style="transition-delay: 200ms;">
+        <div class="relative overflow-hidden rounded-2xl border border-white/10 bg-card shadow-2xl">
+          <div id="stage" class="h-[26rem] w-full cursor-grab sm:h-[32rem]" aria-label="Hambúrguer 3D interativo. Arraste para girar, use a roda ou pinça para zoom, clique para desmontar."></div>
+          <p class="pointer-events-none absolute inset-x-0 bottom-3 text-center text-xs text-white/45">Arraste para girar · zoom com a roda ou pinça · toque para desmontar</p>
+        </div>
+ 
+        <div id="panel" data-state="closed" class="flex flex-col rounded-2xl border border-white/10 bg-card p-4 shadow-xl">
+          <h2 class="font-display text-lg font-bold">Camadas do Inove</h2>
+          <ul id="lista" class="mt-3 grid gap-1.5"></ul>
+          <div id="detalhe" aria-live="polite" class="mt-4 rounded-xl border border-fire/30 bg-ink p-3 text-sm leading-relaxed text-white/75"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+    <div class="mini-cta reveal rounded-3xl border border-white/10 p-5 shadow-2xl md:p-7">
+      <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p class="text-xs font-bold uppercase tracking-[0.22em] text-gold">Pedido em 1 minuto</p>
+          <h2 class="mt-2 font-display text-2xl font-extrabold sm:text-3xl">Escolha o seu favorito e confirme pelo WhatsApp</h2>
+        </div>
+        <a data-wa="Olá, Inove Burguer! Quero fazer um pedido hoje mesmo." target="_blank" rel="noopener noreferrer"
+           class="btn btn-wa inline-flex items-center justify-center gap-2 rounded-xl bg-[#25D366] px-5 py-3 font-bold text-ink">
+          <i class="fa-brands fa-whatsapp text-xl"></i> Pedir agora
+        </a>
+      </div>
+      <div class="mt-5 grid gap-3 md:grid-cols-3">
+        <div class="rounded-2xl border border-white/10 bg-black/10 p-4">
+          <p class="text-gold"><i class="fa-solid fa-check mr-2"></i>1. Escolha</p>
+          <p class="mt-2 text-sm text-white/70">Selecione o combo ou hambúrguer ideal para o seu momento.</p>
+        </div>
+        <div class="rounded-2xl border border-white/10 bg-black/10 p-4">
+          <p class="text-gold"><i class="fa-solid fa-comment-dots mr-2"></i>2. Confirme</p>
+          <p class="mt-2 text-sm text-white/70">Enviamos a mensagem direto para a cozinha e a equipe já prepara seu pedido.</p>
+        </div>
+        <div class="rounded-2xl border border-white/10 bg-black/10 p-4">
+          <p class="text-gold"><i class="fa-solid fa-motorcycle mr-2"></i>3. Receba</p>
+          <p class="mt-2 text-sm text-white/70">Entrega rápida e sabor impecável em Samambaia Sul e região.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+ 
+  <!-- CARDÁPIO -->
+  <section id="cardapio" class="bg-card/60 py-20 border-t border-white/5">
+    <div class="mx-auto max-w-6xl px-4 sm:px-6">
+      <div class="reveal flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <h2 class="font-display text-3xl font-extrabold sm:text-4xl">Os favoritos da <span class="fire-text">casa</span></h2>
+          <p class="mt-3 max-w-xl text-white/65">Toque em pedir e o WhatsApp abre com o nome do hambúrguer já na mensagem.</p>
+        </div>
+        <div class="flex flex-wrap gap-2" aria-label="Filtro do cardápio">
+          <button type="button" class="filter-btn active rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-white/75" data-filter="Todos">Todos</button>
+          <button type="button" class="filter-btn rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-white/75" data-filter="Combo">Combos</button>
+          <button type="button" class="filter-btn rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-white/75" data-filter="Hambúrguer">Hambúrgueres</button>
+          <button type="button" class="filter-btn rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-white/75" data-filter="Porção">Porções</button>
+          <button type="button" class="filter-btn rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-white/75" data-filter="Milk Shake">Milk Shakes</button>
+          <button type="button" class="filter-btn rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-white/75" data-filter="Bebida">Bebidas</button>
+        </div>
+      </div>
+
+      <div class="reveal mt-8 grid gap-4 md:grid-cols-3">
+        <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-[#ff6b0030] to-[#18181b] p-5 shadow-xl">
+          <p class="text-xs font-bold uppercase tracking-[0.2em] text-gold">Mais pedido</p>
+          <h3 class="mt-3 font-display text-2xl font-bold">Combo Brutus</h3>
+          <p class="mt-2 text-sm text-white/65">3 carnes, 3 queijos e bacon crocante em um combo que conquista a casa toda.</p>
+        </div>
+        <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-[#e3262e30] to-[#18181b] p-5 shadow-xl">
+          <p class="text-xs font-bold uppercase tracking-[0.2em] text-gold">Hit da casa</p>
+          <h3 class="mt-3 font-display text-2xl font-bold">Xodó da Casa</h3>
+          <p class="mt-2 text-sm text-white/65">Clássico com maionese defumada, cebola caramelizada e bacon crocante.</p>
+        </div>
+        <div class="rounded-2xl border border-white/10 bg-gradient-to-br from-[#ffb80022] to-[#18181b] p-5 shadow-xl">
+          <p class="text-xs font-bold uppercase tracking-[0.2em] text-gold">Preferido</p>
+          <h3 class="mt-3 font-display text-2xl font-bold">Tropical</h3>
+          <p class="mt-2 text-sm text-white/65">Abacaxi caramelizado, queijo provolone e molho levemente agridoce.</p>
+        </div>
+      </div>
+
+      <div id="menu" class="mt-10 space-y-10"></div>
+    </div>
+  </section>
+ 
+  <!-- SOBRE -->
+  <section id="sobre" class="py-20">
+    <div class="mx-auto grid max-w-6xl gap-12 px-4 sm:px-6 lg:grid-cols-2 items-center">
+      <div class="reveal">
+        <h2 class="font-display text-3xl font-extrabold sm:text-4xl">De família para <span class="fire-text">família</span></h2>
+        <p class="mt-4 leading-relaxed text-white/70">Ambiente acolhedor, instagramável e atendimento de excelência. Aqui cada detalhe do burguer é pensado para você querer voltar.</p>
+        <ul class="mt-8 grid gap-4 sm:grid-cols-2">
+          <li class="flex gap-3 rounded-xl border border-white/10 bg-card p-4"><i class="fa-solid fa-fire mt-1 text-fire"></i><span class="text-sm"><b class="block text-white">Blend na brasa</b>Assado, grosso e suculento.</span></li>
+          <li class="flex gap-3 rounded-xl border border-white/10 bg-card p-4"><i class="fa-solid fa-bread-slice mt-1 text-fire"></i><span class="text-sm"><b class="block text-white">Brioche artesanal</b>Selado na manteiga.</span></li>
+          <li class="flex gap-3 rounded-xl border border-white/10 bg-card p-4"><i class="fa-solid fa-egg mt-1 text-fire"></i><span class="text-sm"><b class="block text-white">Maionese da Casa</b>Elogiada por centenas de clientes.</span></li>
+          <li class="flex gap-3 rounded-xl border border-white/10 bg-card p-4"><i class="fa-solid fa-cheese mt-1 text-fire"></i><span class="text-sm"><b class="block text-white">Queijos e bacon</b>Cheddar, bacon premium e anéis de cebola crocantes.</span></li>
+        </ul>
+      </div>
+ 
+      <div class="reveal grid content-start gap-5" style="transition-delay: 200ms;">
+        <figure class="rounded-2xl border border-white/10 bg-card p-6 shadow-xl">
+          <div class="flex items-center gap-1 text-gold"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+            <span class="ml-2 text-sm font-semibold text-white">4.9 · +441 avaliações</span></div>
+          <blockquote class="mt-4 text-lg leading-relaxed">“O pão selado na manteiga, queijo gostoso, a maionese da casa é fantástica!”</blockquote>
+          <figcaption class="mt-3 text-sm text-white/50"><i class="fa-brands fa-google mr-1.5"></i>Avaliação de cliente no Google</figcaption>
+        </figure>
+ 
+        <div class="rounded-2xl border border-fire/40 bg-gradient-to-br from-fire/10 to-card p-6 shadow-xl">
+          <div class="flex items-center justify-between gap-3">
+            <h3 class="font-display text-xl font-bold"><i class="fa-regular fa-clock mr-2 text-fire"></i>Horário de funcionamento</h3>
+            <span id="aberto" class="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold"></span>
+          </div>
+          <p class="mt-3 text-2xl font-bold">Todos os dias: <span class="text-gold">17:00 às 00:00</span></p>
+        </div>
+      </div>
+    </div>
+  </section>
+ 
+  <!-- DEPOIMENTOS -->
+  <section class="border-t border-white/10 py-20">
+    <div class="mx-auto max-w-6xl px-4 sm:px-6">
+      <div class="reveal text-center">
+        <span class="inline-flex items-center rounded-full border border-gold/40 bg-gold/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-gold">Prova social</span>
+        <h2 class="mt-5 font-display text-3xl font-extrabold sm:text-4xl">O que a <span class="fire-text">Samambaia</span> fala</h2>
+      </div>
+      <div class="mt-10 grid gap-6 md:grid-cols-3">
+        <article class="soft-card reveal rounded-2xl border border-white/10 p-6 shadow-xl">
+          <div class="mb-4 flex text-gold"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+          <p class="text-base leading-relaxed text-white/75">“O melhor hambúrguer da região. O pão selado na manteiga e a maionese da casa deixam qualquer um querendo repetir.”</p>
+          <div class="mt-5 border-t border-white/10 pt-4 text-sm text-white/50"><strong class="block text-white">Maria L.</strong>Cliente há 1 ano</div>
+        </article>
+        <article class="soft-card reveal rounded-2xl border border-white/10 p-6 shadow-xl" style="transition-delay: 120ms;">
+          <div class="mb-4 flex text-gold"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+          <p class="text-base leading-relaxed text-white/75">“Fiz delivery e foi uma experiência impecável: chegou quente, bem montado e com sabor excepcional.”</p>
+          <div class="mt-5 border-t border-white/10 pt-4 text-sm text-white/50"><strong class="block text-white">Rafael P.</strong>Delivery favorito</div>
+        </article>
+        <article class="soft-card reveal rounded-2xl border border-white/10 p-6 shadow-xl" style="transition-delay: 240ms;">
+          <div class="mb-4 flex text-gold"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+          <p class="text-base leading-relaxed text-white/75">“Ambiente incrível, atendimento de primeira e uma qualidade que faz valer cada mordida.”</p>
+          <div class="mt-5 border-t border-white/10 pt-4 text-sm text-white/50"><strong class="block text-white">Júlia A.</strong>Família e amigos</div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA FINAL -->
+  <section class="border-t border-white/10 bg-card/50 py-20">
+    <div class="mx-auto max-w-4xl px-4 text-center sm:px-6">
+      <div class="reveal rounded-3xl border border-fire/30 bg-gradient-to-r from-fire/10 via-transparent to-gold/10 p-8 shadow-2xl">
+        <p class="text-sm font-bold uppercase tracking-[0.22em] text-gold">Está com fome?</p>
+        <h2 class="mt-4 font-display text-3xl font-extrabold sm:text-4xl">Faça seu pedido agora e venha sentir o sabor que todo mundo está falando.</h2>
+        <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+          <a data-wa="Olá, Inove Burguer! Quero fazer um pedido hoje mesmo." target="_blank" rel="noopener noreferrer"
+             class="btn btn-wa inline-flex items-center justify-center gap-2 rounded-xl bg-[#25D366] px-6 py-3.5 font-bold text-ink">
+            <i class="fa-brands fa-whatsapp text-xl"></i> Pedir no WhatsApp
+          </a>
+          <a href="https://www.google.com/maps/search/?api=1&query=QN+320+Conjunto+3+Samambaia+Sul+Bras%C3%ADlia+DF+72669-409" target="_blank" rel="noopener noreferrer"
+             class="btn inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 px-6 py-3.5 font-bold text-white hover:border-inove hover:text-inove">
+            <i class="fa-solid fa-location-dot"></i> Ver localização
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LOCALIZAÇÃO -->
+  <section id="localizacao" class="border-t border-white/10 bg-card/60 py-20">
+    <div class="mx-auto max-w-6xl px-4 sm:px-6">
+      <div class="reveal">
+        <h2 class="font-display text-3xl font-extrabold sm:text-4xl">Venha nos <span class="fire-text">visitar</span></h2>
+      </div>
+      <div class="mt-8 grid gap-6 md:grid-cols-[1.3fr_1fr] reveal" style="transition-delay: 150ms;">
+        <div class="rounded-2xl border border-white/10 bg-ink p-6 shadow-xl">
+          <p class="flex gap-3 text-lg"><i class="fa-solid fa-location-dot mt-1.5 text-inove"></i>
+            <span>QN 320 Conjunto 3 – Samambaia Sul<br>Brasília – DF, CEP 72669-409</span></p>
+          <p class="mt-4 flex flex-wrap gap-2 text-sm text-white/70">
+            <span class="rounded-full border border-white/15 px-3 py-1"><i class="fa-solid fa-umbrella-beach mr-1.5 text-gold"></i>Mesas externas</span>
+            <span class="rounded-full border border-white/15 px-3 py-1"><i class="fa-solid fa-house mr-1.5 text-gold"></i>Ambiente interno</span>
+            <span class="rounded-full border border-white/15 px-3 py-1"><i class="fa-solid fa-wifi mr-1.5 text-gold"></i>Wi-Fi gratuito</span>
+            <span class="rounded-full border border-white/15 px-3 py-1"><i class="fa-solid fa-motorcycle mr-1.5 text-gold"></i>Delivery</span>
+          </p>
+          <a href="https://www.google.com/maps/search/?api=1&query=QN+320+Conjunto+3+Samambaia+Sul+Bras%C3%ADlia+DF+72669-409" target="_blank" rel="noopener noreferrer"
+             class="btn btn-red mt-6 inline-flex items-center gap-2 rounded-xl bg-inove px-5 py-3 font-bold text-white"><i class="fa-solid fa-diamond-turn-right"></i> Abrir no Google Maps</a>
+        </div>
+        <div class="flex flex-col justify-center gap-3">
+          <a data-wa="Olá, Inove Burguer! Quero fazer um pedido." target="_blank" rel="noopener noreferrer"
+             class="btn btn-wa flex items-center justify-center gap-2 rounded-xl bg-[#25D366] px-5 py-3.5 font-bold text-ink shadow-lg"><i class="fa-brands fa-whatsapp text-xl"></i> (61) 99648-2892</a>
+          <a href="https://www.instagram.com/inoveburguer" target="_blank" rel="noopener noreferrer"
+             class="btn flex items-center justify-center gap-2 rounded-xl border border-white/20 px-5 py-3.5 font-bold hover:border-inove"><i class="fa-brands fa-instagram text-xl"></i> @inoveburguer · +30,2 mil seguidores</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="floating-cta rounded-2xl p-3 md:hidden">
+  <a data-wa="Olá, Inove Burguer! Quero fazer um pedido hoje mesmo." target="_blank" rel="noopener noreferrer"
+     class="btn btn-wa flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-3 font-bold text-ink text-base shadow-[0_18px_40px_rgba(37,211,102,0.28)]">
+    <i class="fa-brands fa-whatsapp text-lg"></i> Pedir agora
+  </a>
+</div>
+ 
+<footer class="border-t border-white/10 bg-ink">
+  <div class="mx-auto grid max-w-6xl gap-8 px-4 py-12 text-sm sm:px-6 md:grid-cols-3">
+    <div>
+      <span class="font-display text-xl font-extrabold"><i class="fa-solid fa-fire mr-2 text-fire"></i>INOVE <span class="text-inove">BURGUER</span></span>
+      <p class="mt-3 text-white/55">Hamburgueria artesanal em Samambaia Sul.</p>
+    </div>
+    <div class="text-white/70">
+      <p><i class="fa-solid fa-location-dot mr-2 text-inove"></i>QN 320 Conjunto 3, Samambaia Sul<br><span class="ml-6">Brasília – DF · 72669-409</span></p>
+      <p class="mt-3"><i class="fa-regular fa-clock mr-2 text-inove"></i>Todos os dias, 17:00 às 00:00</p>
+    </div>
+    <div class="flex flex-col gap-3 text-white/70">
+      <a data-wa="Olá, Inove Burguer! Quero fazer um pedido." target="_blank" rel="noopener noreferrer" class="hover:text-[#25D366]"><i class="fa-brands fa-whatsapp mr-2"></i>(61) 99648-2892</a>
+      <a href="https://www.instagram.com/inoveburguer" target="_blank" rel="noopener noreferrer" class="hover:text-white"><i class="fa-brands fa-instagram mr-2"></i>@inoveburguer</a>
+    </div>
+  </div>
+  <p class="border-t border-white/5 py-5 text-center text-xs text-white/40">© <span id="ano">2026</span> Inove Burguer. Todos os direitos reservados.</p>
+</footer>
+ 
+<script>
+/* ---------- Animações de Rolamento (Scroll Reveal) ---------- */
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('active');
+    }
+  });
+}, { threshold: 0.12 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+/* ---------- Dados e utilitários ---------- */
+const FONE = '5561996482892';
+const wa = t => `https://wa.me/${FONE}?text=${encodeURIComponent(t)}`;
+document.querySelectorAll('[data-wa]').forEach(a => a.href = wa(a.dataset.wa));
+document.getElementById('ano').textContent = new Date().getFullYear();
+
+const hora = +new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo', hour: 'numeric', hour12: false }) % 24;
+const ab = document.getElementById('aberto');
+const links = document.querySelectorAll('header nav a, .site-header nav a');
+const sections = [...document.querySelectorAll('main section[id], footer')].filter(el => el.id);
+const setActiveLink = () => {
+  const offset = window.scrollY + 160;
+  let current = 'experiencia';
+  sections.forEach(section => {
+    if (section.offsetTop <= offset) current = section.id || current;
+  });
+  links.forEach(link => {
+    const active = link.getAttribute('href') === '#' + current;
+    link.style.color = active ? '#fff' : '';
+    link.style.opacity = active ? '1' : '';
+  });
+};
+if (links.length) {
+  setActiveLink();
+  window.addEventListener('scroll', setActiveLink, { passive: true });
+}
+if (ab) {
+  ab.textContent = hora >= 17 ? 'Aberto agora' : 'Abrimos às 17h';
+  ab.className += hora >= 17 ? ' text-[#25D366]' : ' text-white/70';
+}
+ 
+const menuSections = [
+  {
+    title: 'Combos',
+    key: 'Combo',
+    items: [
+      { nome: 'Combo Xodó da Casa', preco: '47,99', tag: 'Combo', categoria: 'Combo', foto: 'img/hamburger.jpeg', desc: 'Pão brioche, carne artesanal 130g, queijo cheddar, alface, tomate, cebola caramelizada, bacon crocante e maionese defumada. 1 batata pequena + 1 refri 220ml.' },
+      { nome: 'Combo Brutus', preco: '64,99', tag: 'Combo', categoria: 'Combo', foto: 'img/hamburgerinove1.jpeg', desc: 'Pão brioche, 3 carnes artesanais 130g, 3 queijos cheddar, bacon crocante e maionese defumada. 1 batata pequena + 1 refri 220ml.' },
+      { nome: 'Combo Golden', preco: '53,99', tag: 'Combo', categoria: 'Combo', foto: 'img/hamburger atrativo.jpg', desc: 'Pão prime, carne artesanal 130g, queijo cheddar, 3 almofadas de queijo gouda, bacon crocante, molho levemente agridoce com leve sensação de ardência e maionese baconense. 1 batata pequena + 1 refri 220ml.' },
+      { nome: 'Combo Magnífico', preco: '49,99', tag: 'Combo', categoria: 'Combo', foto: 'img/unnamed(7).jpg', desc: 'Pão prime, carne artesanal 130g, geleia de pimenta suave, bacon crocante, queijo provolone, queijo mussarela e maionese grill defumado de churrasco. 1 batata pequena + 1 refri 220ml.' },
+      { nome: 'Combo Dona Wanda', preco: '53,99', tag: 'Combo', categoria: 'Combo', foto: 'img/hamburger.jpeg', desc: 'Pão prime, carne artesanal 130g, carne de panela desfiada, catupiry original, farofa de bacon e maionese grill. 1 batata pequena + 1 refri 220ml.' },
+      { nome: 'Combo Clássico Burguer', preco: '40,99', tag: 'Combo', categoria: 'Combo', foto: 'img/hamburgerinove1.jpeg', desc: 'Pão brioche, carne artesanal 130g, queijo cheddar e maionese grill. 1 batata pequena + 1 refri 220ml.' },
+      { nome: 'Combo Chicken Crispy', preco: '46,99', tag: 'Combo', categoria: 'Combo', foto: 'img/hamburger atrativo.jpg', desc: 'Pão brioche, frango 130g, queijo mussarela, cebola crispy, alface, tomate e maionese grill. 1 batata pequena + 1 refri 220ml.' },
+      { nome: 'Combo Cheddar Clássico', preco: '46,99', tag: 'Combo', categoria: 'Combo', foto: 'img/unnamed(7).jpg', desc: 'Pão brioche, carne artesanal 130g, queijo cheddar, cheddar cremoso, farofa crispy e maionese baconense. 1 batata pequena + 1 refri 220ml.' },
+      { nome: 'Combo Tropical', preco: '53,99', tag: 'Combo', categoria: 'Combo', foto: 'img/hamburger.jpeg', desc: 'Pão prime, carne artesanal 130g, abacaxi caramelizado no melaço de cana, bacon crocante, queijo provolone, maionese grill e molho levemente agridoce com leve sensação de ardência. 1 batata pequena + 1 refri 220ml.' },
+      { nome: 'Combo Australiano', preco: '47,99', tag: 'Combo', categoria: 'Combo', foto: 'img/hamburgerinove1.jpeg', desc: 'Pão australiano, carne artesanal 130g, queijo cheddar, cebola caramelizada, bacon crocante, maionese defumada e maionese baconense. 1 batata pequena + 1 refri 220ml.' },
+      { nome: 'Combo Caramelizado Agridoce', preco: '50,99', tag: 'Combo', categoria: 'Combo', foto: 'img/hamburger atrativo.jpg', desc: 'Pão prime, carne artesanal 130g, queijo cheddar, bacon crocante levemente caramelizado, cebola caramelizada e maionese baconense. 1 batata pequena + 1 refri 220ml.' },
+      { nome: 'Combo Onion Burger', preco: '53,99', tag: 'Combo', categoria: 'Combo', foto: 'img/unnamed(7).jpg', desc: 'Pão prime, carne artesanal 130g, queijo cheddar, 3 anéis de cebola com molho levemente agridoce, farofa de bacon crocante e maionese baconense. 1 batata pequena + 1 refri 220ml.' }
+    ]
+  },
+  {
+    title: 'Hambúrgueres',
+    key: 'Hambúrguer',
+    items: [
+      { nome: 'Brutus', preco: '50,99', tag: 'Famoso', categoria: 'Hambúrguer', foto: 'img/hamburgerinove1.jpeg', desc: 'Pão brioche, 3 carnes artesanais feitas na brasa 130g, 3 queijos cheddar, bacon crocante e maionese defumada.' },
+      { nome: 'Xodó da Casa', preco: '33,99', tag: 'Popular', categoria: 'Hambúrguer', foto: 'img/hamburger.jpeg', desc: 'Pão brioche, carne artesanal 130g feita na brasa, queijo cheddar, alface, tomate, cebola caramelizada, bacon crocante e maionese defumada.' },
+      { nome: 'Golden', preco: '39,99', tag: 'Especial', categoria: 'Hambúrguer', foto: 'img/hamburger atrativo.jpg', desc: 'Pão prime, carne artesanal 130g feita na brasa, queijo cheddar, 3 almofadas de queijo gouda, bacon crocante, molho levemente agridoce com leve sensação de ardência e maionese baconense.' },
+      { nome: 'Magnífico', preco: '35,99', tag: 'Especial', categoria: 'Hambúrguer', foto: 'img/unnamed(7).jpg', desc: 'Pão prime, carne artesanal 130g feita na brasa, geleia de pimenta suave, bacon crocante, queijo provolone, queijo mussarela e maionese grill defumado de churrasco.' },
+      { nome: 'Dona Wanda', preco: '39,99', tag: 'Delícia', categoria: 'Hambúrguer', foto: 'img/hamburger.jpeg', desc: 'Pão prime, carne artesanal 130g feita na brasa, queijo cheddar, catupiry original, carne desfiada da mãe do Davi, farofa de bacon e maionese grill.' },
+      { nome: 'Clássico Burguer', preco: '26,99', tag: 'Clássico', categoria: 'Hambúrguer', foto: 'img/hamburgerinove1.jpeg', desc: 'Pão brioche, carne artesanal 130g feita na brasa, queijo cheddar e maionese grill.' },
+      { nome: 'Chicken Crispy', preco: '32,99', tag: 'Frango', categoria: 'Hambúrguer', foto: 'img/hamburger atrativo.jpg', desc: 'Pão brioche, frango 130g feita na brasa, queijo mussarela, cebola crispy, alface, tomate e maionese grill.' },
+      { nome: 'Cheddar Clássico', preco: '32,99', tag: 'Cheddar', categoria: 'Hambúrguer', foto: 'img/unnamed(7).jpg', desc: 'Pão brioche, carne artesanal 130g feita na brasa, queijo cheddar, molho de cheddar cremoso, farofa crispy e maionese baconense.' },
+      { nome: 'Tropical', preco: '39,99', tag: 'Especial', categoria: 'Hambúrguer', foto: 'img/hamburger.jpeg', desc: 'Pão prime, carne artesanal 130g feita na brasa, abacaxi caramelizado no melaço de cana, bacon crocante, queijo provolone, maionese grill defumado e molho levemente agridoce com leve sensação de ardência.' },
+      { nome: 'Australiano', preco: '33,99', tag: 'Australiano', categoria: 'Hambúrguer', foto: 'img/hamburgerinove1.jpeg', desc: 'Pão australiano, carne artesanal 130g feita na brasa, queijo cheddar, cebola caramelizada, bacon crocante, maionese defumada e maionese baconense.' },
+      { nome: 'Caramelizado Agridoce', preco: '36,99', tag: 'Especial', categoria: 'Hambúrguer', foto: 'img/hamburger atrativo.jpg', desc: 'Pão prime, carne artesanal 130g feita na brasa, queijo cheddar, bacon crocante levemente caramelizado, cebola caramelizada e maionese baconense.' },
+      { nome: 'Onion Burguer', preco: '39,99', tag: 'Especial', categoria: 'Hambúrguer', foto: 'img/unnamed(7).jpg', desc: 'Pão prime, carne artesanal 130g, queijo cheddar, 3 anéis de cebola com molho levemente agridoce com leve sensação de ardência, farofa de bacon crocante e maionese baconense.' }
+    ]
+  },
+  {
+    title: 'Porções de Fritas',
+    key: 'Porção',
+    items: [
+      { nome: 'Batata do Combo Pequena sem Bebida', preco: '11,99', tag: 'Porção', categoria: 'Porção', foto: '', desc: 'Batata que vai no combo do burger pequena sem a bebida.' },
+      { nome: 'Batata Simples Grande', preco: '28,99', tag: 'Porção', categoria: 'Porção', foto: '', desc: 'Porção grande de batata crocante e dourada.' },
+      { nome: 'Batata com Cheddar Grande', preco: '31,99', tag: 'Porção', categoria: 'Porção', foto: '', desc: 'Batata grande com cheddar derretido por cima.' },
+      { nome: 'Batata com Maionese Grill', preco: '31,99', tag: 'Porção', categoria: 'Porção', foto: '', desc: 'Batata grande com maionese grill especial.' },
+      { nome: 'Batata com Cheddar e Farofa de Bacon Grande', preco: '38,99', tag: 'Porção', categoria: 'Porção', foto: '', desc: 'Batata grande com cheddar, farofa de bacon e sabor irresistível.' },
+      { nome: 'Batata com Maionese Grill e Farofa de Bacon Grande', preco: '38,99', tag: 'Porção', categoria: 'Porção', foto: '', desc: 'Batata grande com maionese grill e farofa de bacon.' },
+      { nome: 'Batata com Catupiry e Carne Desfiada Grande', preco: '44,99', tag: 'Porção', categoria: 'Porção', foto: '', desc: 'Batata grande com catupiry e carne desfiada.' },
+      { nome: 'Batata com Carne Desfiada e Maionese Grill', preco: '44,99', tag: 'Porção', categoria: 'Porção', foto: '', desc: 'Deliciosa porção com carne desfiada e maionese grill.' }
+    ]
+  },
+  {
+    title: 'Maioneses Especiais',
+    key: 'Maionese',
+    items: [
+      { nome: 'Maionese Grill', preco: '3,99', tag: 'Molho', categoria: 'Maionese', foto: '', desc: 'Molho grill clássico da casa.' },
+      { nome: 'Maionese Baconense', preco: '3,99', tag: 'Molho', categoria: 'Maionese', foto: '', desc: 'Molho baconense com sabor intenso e cremoso.' },
+      { nome: 'Molho Chilli', preco: '3,99', tag: 'Molho', categoria: 'Maionese', foto: '', desc: 'Molho levemente apimentado com sabor marcante.' }
+    ]
+  },
+  {
+    title: 'Milk Shakes',
+    key: 'Milk Shake',
+    items: [
+      { nome: 'Milk-Shake de Bacon', preco: '22,99', tag: 'Shake', categoria: 'Milk Shake', foto: '', desc: 'Milk shake de bacon, 300ml.' },
+      { nome: 'Milk-Shake de Chicleninho', preco: '22,99', tag: 'Shake', categoria: 'Milk Shake', foto: '', desc: 'Milk shake de chicleninho, 300ml.' },
+      { nome: 'Milk-Shake de Leite Ninho', preco: '22,99', tag: 'Shake', categoria: 'Milk Shake', foto: '', desc: 'Milk shake de leite ninho, 300ml.' },
+      { nome: 'Milk-Shake de Ovomaltine', preco: '22,99', tag: 'Shake', categoria: 'Milk Shake', foto: '', desc: 'Milk shake de ovomaltine, 300ml.' },
+      { nome: 'Milk-Shake de Oreo', preco: '22,99', tag: 'Shake', categoria: 'Milk Shake', foto: '', desc: 'Milk shake de oreo, 300ml.' },
+      { nome: 'Milk Shake de Frutas Vermelhas', preco: '22,99', tag: 'Shake', categoria: 'Milk Shake', foto: '', desc: 'Milk shake de frutas vermelhas, 300ml.' },
+      { nome: 'Milk Shake de Mousse de Limão', preco: '22,99', tag: 'Shake', categoria: 'Milk Shake', foto: '', desc: 'Milk shake de mousse de limão, 300ml.' },
+      { nome: 'Milk Shake de Nutella com Ninho', preco: '31,99', tag: 'Shake', categoria: 'Milk Shake', foto: '', desc: 'Milk shake de nutella com ninho, 300ml.' },
+      { nome: 'Milk Shake de Nutella com Ovomaltine', preco: '31,99', tag: 'Shake', categoria: 'Milk Shake', foto: '', desc: 'Milk shake de nutella com ovomaltine, 300ml.' },
+      { nome: 'Milk Shake de Nutella com Oreo', preco: '31,99', tag: 'Shake', categoria: 'Milk Shake', foto: '', desc: 'Milk shake de nutella com oreo, 300ml.' },
+      { nome: 'Milk Shake de Nutella com Frutas Vermelhas', preco: '31,99', tag: 'Shake', categoria: 'Milk Shake', foto: '', desc: 'Milk shake de nutella com frutas vermelhas, 300ml.' }
+    ]
+  },
+  {
+    title: 'Refrigerantes e Sucos',
+    key: 'Bebida',
+    items: [
+      { nome: 'Coca-Cola Zero 220ml', preco: '6,99', tag: 'Bebida', categoria: 'Bebida', foto: '', desc: 'Refrigerante coca-cola zero 220ml.' },
+      { nome: 'Guaraná 269ml', preco: '6,99', tag: 'Bebida', categoria: 'Bebida', foto: '', desc: 'Guaraná tradicional 269ml.' },
+      { nome: 'Guaraná Zero 269ml', preco: '6,99', tag: 'Bebida', categoria: 'Bebida', foto: '', desc: 'Guaraná zero 269ml.' },
+      { nome: 'Pepsi 269ml', preco: '6,99', tag: 'Bebida', categoria: 'Bebida', foto: '', desc: 'Pepsi tradicional 269ml.' },
+      { nome: 'Pepsi Black 350ml', preco: '8,99', tag: 'Bebida', categoria: 'Bebida', foto: '', desc: 'Pepsi black 350ml.' },
+      { nome: 'Suco Del Valle de Uva', preco: '6,99', tag: 'Bebida', categoria: 'Bebida', foto: '', desc: 'Suco ready-to-drink de uva.' },
+      { nome: 'Água com Gás', preco: '4,99', tag: 'Bebida', categoria: 'Bebida', foto: '', desc: 'Água com gás.' },
+      { nome: 'Água sem Gás', preco: '3,99', tag: 'Bebida', categoria: 'Bebida', foto: '', desc: 'Água sem gás.' },
+      { nome: 'Coca-Cola 1,5L', preco: '15,99', tag: 'Bebida', categoria: 'Bebida', foto: '', desc: 'Garrafa de 1,5L da Coca-Cola.' },
+      { nome: 'Coca-Cola Zero 1,5L', preco: '15,99', tag: 'Bebida', categoria: 'Bebida', foto: '', desc: 'Garrafa de 1,5L da Coca-Cola zero.' },
+      { nome: 'Guaraná 1,5L', preco: '15,99', tag: 'Bebida', categoria: 'Bebida', foto: '', desc: 'Garrafa de 1,5L de guaraná.' },
+      { nome: 'Suco Only Manga', preco: '8,99', tag: 'Bebida', categoria: 'Bebida', foto: '', desc: 'Suco only de manga.' },
+      { nome: 'Suco Only Uva', preco: '8,99', tag: 'Bebida', categoria: 'Bebida', foto: '', desc: 'Suco only de uva.' },
+      { nome: 'Suco Only Goiaba', preco: '8,99', tag: 'Bebida', categoria: 'Bebida', foto: '', desc: 'Suco only de goiaba.' },
+      { nome: 'Coca-Cola Normal 310ml', preco: '8,99', tag: 'Bebida', categoria: 'Bebida', foto: '', desc: 'Lata de coca normal 310ml.' },
+      { nome: 'Coca-Cola Zero 310ml', preco: '8,99', tag: 'Bebida', categoria: 'Bebida', foto: '', desc: 'Lata de coca zero 310ml.' },
+      { nome: 'Sprite Zero 310ml', preco: '8,99', tag: 'Bebida', categoria: 'Bebida', foto: '', desc: 'Lata de sprite zero 310ml.' },
+      { nome: 'Guaraná Normal 350ml', preco: '8,99', tag: 'Bebida', categoria: 'Bebida', foto: '', desc: 'Guaraná normal 350ml.' },
+      { nome: 'Guaraná Zero 350ml', preco: '8,99', tag: 'Bebida', categoria: 'Bebida', foto: '', desc: 'Guaraná zero 350ml.' },
+      { nome: 'Schweppes Citrus 310ml', preco: '8,99', tag: 'Bebida', categoria: 'Bebida', foto: '', desc: 'Schweppes citrus 310ml.' }
+    ]
+  }
+];
+
+const menuState = { filtro: 'Todos' };
+
+const renderMenuSection = (section) => `
+  <div class="space-y-5">
+    <div class="flex items-center justify-between gap-3">
+      <h3 class="font-display text-2xl font-bold text-white">${section.title}</h3>
+      <span class="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-gold">${section.items.length} itens</span>
+    </div>
+    <div class="grid gap-6 md:grid-cols-3">
+      ${section.items.map((b, idx) => `
+        <article class="menu-card reveal flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-card shadow-xl" style="transition-delay: ${idx * 80}ms">
+          <div class="relative h-52 overflow-hidden bg-[radial-gradient(circle_at_50%_60%,rgba(255,107,0,.35),rgba(227,38,46,.12)_55%,transparent_75%)]">
+            ${b.foto ? `<img src="${b.foto}" alt="${b.nome}" class="h-full w-full object-cover">` : `<div class="flex h-full w-full items-center justify-center"><i class="fa-solid fa-burger text-7xl text-fire" aria-hidden="true"></i></div>`}
+            <span class="absolute left-4 top-4 rounded-full bg-inove px-3 py-1 text-xs font-bold text-white">${b.tag}</span>
+          </div>
+          <div class="flex flex-1 flex-col p-6">
+            <div class="mb-3 flex items-center justify-between gap-3">
+              <span class="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-gold">${b.categoria}</span>
+              <span class="whitespace-nowrap font-display text-xl font-extrabold text-gold">R$ ${b.preco}</span>
+            </div>
+            <h4 class="font-display text-2xl font-bold leading-tight">${b.nome}</h4>
+            <p class="mt-3 flex-1 text-sm leading-relaxed text-white/65">${b.desc}</p>
+            <a href="${wa(`Olá, Inove Burguer! Quero pedir o ${b.nome} (R$ ${b.preco}).`)}" target="_blank" rel="noopener noreferrer"
+               class="btn btn-wa mt-6 inline-flex items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-3 text-sm font-bold text-ink">
+              <i class="fa-brands fa-whatsapp text-lg"></i> Pedir</a>
+          </div>
+        </article>
+      `).join('')}
+    </div>
+  </div>
+`;
+
+const renderMenu = () => {
+  const sections = menuState.filtro === 'Todos'
+    ? menuSections
+    : menuSections.filter(section => section.key === menuState.filtro);
+
+  document.getElementById('menu').innerHTML = sections.map(renderMenuSection).join('');
+
+  document.querySelectorAll('.filter-btn').forEach(button => {
+    button.classList.toggle('active', button.dataset.filter === menuState.filtro);
+  });
+
+  document.querySelectorAll('#menu .reveal').forEach(el => observer.observe(el));
+};
+
+document.querySelectorAll('.filter-btn').forEach(button => {
+  button.addEventListener('click', () => {
+    menuState.filtro = button.dataset.filter;
+    renderMenu();
+  });
+});
+
+renderMenu();
+ 
+/* ---------- Hambúrguer 3D (Com iluminação e materiais aprimorados) ---------- */
+(() => {
+  const stage = document.getElementById('stage');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let renderer;
+  try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); }
+  catch (e) { stage.innerHTML = '<p class="p-8 text-center text-sm text-white/60">Não foi possível abrir o modelo 3D neste navegador (WebGL indisponível).</p>'; return; }
+ 
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  const cv = renderer.domElement; cv.className = 'block h-full w-full'; stage.appendChild(cv);
+ 
+  const scene = new THREE.Scene();
+  const cam = new THREE.PerspectiveCamera(38, 1, .1, 100); cam.position.set(0, 2.4, 14.4);
+  const ctl = new THREE.OrbitControls(cam, cv);
+  Object.assign(ctl, { enablePan: false, enableDamping: true, minDistance: 7, maxDistance: 20, autoRotate: !reduce, autoRotateSpeed: 1.6 });
+  ctl.addEventListener('start', () => ctl.autoRotate = false);
+ 
+  // Luzes realistas aprimoradas
+  scene.add(new THREE.HemisphereLight(0xfff1dd, 0x2a1410, 1.1));
+  const key = new THREE.DirectionalLight(0xfff0d8, 1.6); key.position.set(5, 9, 6); scene.add(key);
+  const rim1 = new THREE.PointLight(0xe3262e, 2.0, 40); rim1.position.set(-7, 2, -6); scene.add(rim1);
+  const rim2 = new THREE.PointLight(0xff6b00, 1.5, 40); rim2.position.set(7, -3, -4); scene.add(rim2);
+ 
+  /* helpers */
+  const M = (c, r = .5) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: 0.1, side: THREE.DoubleSide });
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const tex = (w, h, draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h);
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; };
+  const lathe = (pts, mat) => new THREE.Mesh(new THREE.LatheGeometry(pts.map(p => new THREE.Vector2(p[0], p[1])), 56), mat);
+  const disc = (r, color, y, down) => { const m = new THREE.Mesh(new THREE.CircleGeometry(r, 40), M(color, .6)); m.rotation.x = down ? Math.PI / 2 : -Math.PI / 2; m.position.y = y; return m; };
+ 
+  const bunTex = tex(64, 128, (g, w, h) => {
+    const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#ecb862'); gr.addColorStop(.6, '#d98f33'); gr.addColorStop(1, '#b8691f');
+    g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    for (let i = 0; i < 280; i++) { g.fillStyle = Math.random() < .5 ? 'rgba(120,60,10,.12)' : 'rgba(255,230,170,.12)'; g.fillRect(Math.random() * w, Math.random() * h, 2, 2); }
+  });
+  const pattyTex = tex(256, 256, (g, w, h) => {
+    g.fillStyle = '#3a1f12'; g.fillRect(0, 0, w, h);
+    for (let i = 0; i < 900; i++) { g.fillStyle = Math.random() < .5 ? 'rgba(15,5,1,.35)' : 'rgba(110,60,30,.35)'; g.fillRect(Math.random() * w, Math.random() * h, 3, 3); }
+    g.strokeStyle = 'rgba(10,3,1,.8)'; g.lineWidth = 14;
+    for (let x = -h; x < w + h; x += 48) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x + h, h); g.stroke(); }
+  });
+  const baconTex = tex(64, 32, (g, w, h) => {
+    ['#6a180e', '#b85440', '#6a180e', '#e0b094', '#7c1e13', '#b85440', '#6a180e'].forEach((c, i, a) => { g.fillStyle = c; g.fillRect(0, i * h / a.length, w, h / a.length + 1); });
+  });
+ 
+  function ruffle(R, color, amp, k) {
+    const g = new THREE.RingGeometry(.01, R, 96, 12), p = g.attributes.position;
+    for (let i = 0; i < p.count; i++) {
+      const x = p.getX(i), y = p.getY(i), r = Math.hypot(x, y), a = Math.atan2(y, x), f = r / R, s = 1 + .05 * f * Math.sin(a * k * 1.7);
+      p.setXY(i, x * s, y * s); p.setZ(i, Math.sin(a * k + r * 2) * amp * f * f + Math.sin(a * k * .5) * amp * .4 * f);
+    }
+    g.computeVertexNormals();
+    const m = new THREE.Mesh(g, M(color, .35)); m.rotation.x = -Math.PI / 2; return m;
+  }
+ 
+  const buildTop = () => {
+    const g = new THREE.Group(), pts = [[1.42, 0]];
+    for (let i = 0; i <= 18; i++) { const t = i / 18 * Math.PI / 2; pts.push([1.5 * Math.cos(t), .05 + 1.05 * Math.sin(t)]); }
+    g.add(lathe(pts, new THREE.MeshStandardMaterial({ map: bunTex, roughness: .45, metalness: 0.05, side: THREE.DoubleSide })), disc(1.42, '#ecca88', .01, true));
+    const sm = M('#f5e6b8', .4);
+    for (let i = 0; i < 60; i++) {
+      const t = rnd(.5, 1.45), f = rnd(0, Math.PI * 2), p = new THREE.Vector3(1.5 * Math.cos(t) * Math.cos(f), .05 + 1.05 * Math.sin(t), 1.5 * Math.cos(t) * Math.sin(f));
+      const n = p.clone().sub(new THREE.Vector3(0, .05, 0)).normalize(), s = new THREE.Mesh(new THREE.SphereGeometry(.07, 8, 6), sm);
+      s.position.copy(p).addScaledVector(n, .015); s.lookAt(p.clone().add(n)); s.scale.set(1.5, 1, .55); s.rotateZ(rnd(0, 3)); g.add(s);
+    }
+    return g;
+  };
+  const buildBacon = () => {
+    const g = new THREE.Group(), mat = new THREE.MeshStandardMaterial({ map: baconTex, roughness: .4, metalness: 0.1 });
+    [[-.6, .2, 2.7], [0, -.25, 2.5], [.6, .15, 2.6]].forEach(([z, ry, len], j) => {
+      const geo = new THREE.BoxGeometry(len, .06, .38, 50, 1, 1), p = geo.attributes.position;
+      for (let i = 0; i < p.count; i++) { const x = p.getX(i); p.setY(i, p.getY(i) + Math.sin(x * 3.4 + j * 1.7) * .06); p.setZ(i, p.getZ(i) + Math.sin(x * 2.2 + j) * .06); }
+      geo.computeVertexNormals(); const m = new THREE.Mesh(geo, mat); m.position.set(0, .06, z); m.rotation.y = ry; g.add(m);
+    });
+    return g;
+  };
+  const buildLettuceTop = () => { const g = new THREE.Group(), a = ruffle(1.75, '#6fb83a', .12, 13), b = ruffle(1.5, '#9bd651', .1, 9); a.position.y = .04; b.position.y = .1; g.add(a, b); return g; };
+  const buildTomato = () => {
+    const g = new THREE.Group();
+    [[-.7, -.35], [.7, -.35], [0, .78]].forEach(([x, z]) => {
+      const s = new THREE.Group(); s.position.set(x, .05, z);
+      s.add(new THREE.Mesh(new THREE.CylinderGeometry(.66, .66, .1, 36), M('#d62a1e', .3)), new THREE.Mesh(new THREE.CylinderGeometry(.52, .52, .108, 32), M('#ee5b3b', .25)));
+      for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2, e = new THREE.Mesh(new THREE.SphereGeometry(.05, 8, 6), M('#f6dc84', .35)); e.position.set(Math.cos(a) * .34, .05, Math.sin(a) * .34); e.scale.y = .5; s.add(e); }
+      g.add(s);
+    });
+    return g;
+  };
+  const buildCheese = () => {
+    const geo = new THREE.PlaneGeometry(3.1, 3.1, 16, 16), p = geo.attributes.position;
+    for (let i = 0; i < p.count; i++) { const d = Math.hypot(p.getX(i), p.getY(i)) - 1.25; if (d > 0) p.setZ(i, -d * d * .38); }
+    geo.computeVertexNormals();
+    const m = new THREE.Mesh(geo, M('#f7a800', .25)); m.rotation.set(-Math.PI / 2, 0, Math.PI / 4); m.position.y = .06;
+    const g = new THREE.Group(); g.add(m); return g;
+  };
+  const buildPatty = () => {
+    const mat = new THREE.MeshStandardMaterial({ map: pattyTex, roughness: .7, metalness: 0.15 }), geo = new THREE.CylinderGeometry(1.42, 1.38, .5, 56, 2), p = geo.attributes.position;
+    for (let i = 0; i < p.count; i++) { const x = p.getX(i), z = p.getZ(i), k = 1 + .025 * Math.sin(Math.atan2(z, x) * 9); p.setX(i, x * k); p.setZ(i, z * k); }
+    geo.computeVertexNormals(); const m = new THREE.Mesh(geo, mat); m.position.y = .25; const g = new THREE.Group(); g.add(m); return g;
+  };
+  const buildLettuceLow = () => {
+    const g = new THREE.Group(), l = ruffle(1.62, '#5aa82f', .1, 11); l.position.y = .04; g.add(l);
+    [[0, 0], [.8, .2], [-.8, .3], [.3, -.8], [-.4, -.7]].forEach(([x, z]) => {
+      const p = new THREE.Mesh(new THREE.CylinderGeometry(.3, .3, .05, 24), M('#6b8e23', .35)); p.position.set(x, .12, z); g.add(p);
+      const r = new THREE.Mesh(new THREE.CylinderGeometry(.2, .2, .056, 24), M('#9bb94a', .35)); r.position.set(x, .12, z); g.add(r);
+    });
+    return g;
+  };
+  const buildOnion = () => {
+    const g = new THREE.Group(), a = M('#9b3a9f', .4), b = M('#c875d0', .4);
+    [[-.75, -.5], [.75, -.45], [0, .8], [-.55, .45], [.5, .1]].forEach(([x, z]) => {
+      const big = new THREE.Mesh(new THREE.TorusGeometry(.5, .075, 12, 36), a), small = new THREE.Mesh(new THREE.TorusGeometry(.3, .06, 12, 32), b);
+      [big, small].forEach(t => { t.rotation.x = Math.PI / 2; t.position.set(x, .08, z); g.add(t); });
+    });
+    return g;
+  };
+  const buildBase = () => {
+    const g = new THREE.Group();
+    g.add(lathe([[0, 0], [1.3, 0], [1.45, .08], [1.52, .22], [1.46, .38], [1.3, .42], [0, .42]], new THREE.MeshStandardMaterial({ map: bunTex, roughness: .5, metalness: 0.05, side: THREE.DoubleSide })), disc(1.3, '#b9772a', .005, true));
+    return g;
+  };
+ 
+  const L = [
+    { n: 'Pão brioche do topo', h: 1.1, b: buildTop, d: 'Brioche artesanal arredondado, macio e coberto de gergelim. A moldura dourada que abraça tudo.' },
+    { n: 'Bacon crocante', h: .12, b: buildBacon, d: 'Tiras de bacon premium, onduladas e douradas até ficarem crocantes.' },
+    { n: 'Alface crespa', h: .2, b: buildLettuceTop, d: 'Folhas frescas e crespas que trazem crocância e leveza à primeira mordida.' },
+    { n: 'Tomate suculento', h: .12, b: buildTomato, d: 'Fatias de tomate vermelho e suculento para equilibrar a gordura do blend.' },
+    { n: 'Cheddar derretido', h: .1, b: buildCheese, d: 'Queijo cheddar selecionado, derretido sobre a carne com as pontas caindo pelas beiradas.' },
+    { n: 'Blend na brasa (160g)', h: .5, b: buildPatty, d: 'Blend artesanal grosso de 160g, assado na brasa: suculento por dentro, selado por fora.' },
+    { n: 'Alface e picles', h: .16, b: buildLettuceLow, d: 'Uma cama de alface com fatias de picles para dar frescor e um toque ácido.' },
+    { n: 'Cebola roxa', h: .16, b: buildOnion, d: 'Cebola roxa fatiada em anéis, com sabor adocicado e crocante.' },
+    { n: 'Pão brioche da base', h: .42, b: buildBase, d: 'Brioche artesanal selado na manteiga, firme para segurar tudo. Combina com a Maionese Especial da Casa.' }
+  ];
+ 
+  const burger = new THREE.Group(); scene.add(burger);
+  const total = L.reduce((s, l) => s + l.h, 0); let cum = 0;
+  for (let i = L.length - 1; i >= 0; i--) { L[i].y0 = cum - total / 2; cum += L[i].h; }
+  L.forEach((l, i) => { l.y1 = (L.length - 1 - i - 4) * .8 - .5; l.g = l.b(); l.g.userData.layer = l; l.g.position.y = l.y0; burger.add(l.g); });
+ 
+  const lista = document.getElementById('lista'), det = document.getElementById('detalhe'), panel = document.getElementById('panel'), btn = document.getElementById('btnToggle');
+  let exploded = false, sel = null;
+  L.forEach(l => {
+    const li = document.createElement('li');
+    li.innerHTML = `<button type="button" aria-pressed="false" class="flex w-full items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-left text-sm text-white/75 transition hover:border-fire/60"><i class="fa-solid fa-circle text-[6px] text-fire"></i>${l.n}</button>`;
+    l.btn = li.firstChild; l.btn.onclick = () => { if (!exploded) setExploded(true); select(l); }; lista.appendChild(li);
+  });
+  function glow(g, on) { g.traverse(o => { if (o.isMesh && o.material.emissive) o.material.emissive.setHex(on ? 0x5a2e00 : 0); }); }
+  function render() {
+    panel.dataset.state = exploded ? 'open' : 'closed';
+    btn.lastElementChild.textContent = exploded ? 'Montar Burguer' : 'Desmontar Burguer';
+    det.innerHTML = !exploded ? 'Toque no burguer ou em <b>Desmontar Burguer</b> para ver cada camada flutuar e conhecer o ingrediente.'
+      : sel ? `<b class="block font-display text-base text-white">${sel.n}</b>${sel.d}` : 'Escolha uma camada na lista ou toque nela no modelo.';
+    L.forEach(l => { l.btn.setAttribute('aria-pressed', l === sel); glow(l.g, l === sel); });
+  }
+  function setExploded(v) { exploded = v; if (!v) sel = null; ctl.autoRotate = false; render(); }
+  function select(l) { sel = sel === l ? null : l; render(); }
+  btn.onclick = () => setExploded(!exploded);
+ 
+  const ray = new THREE.Raycaster(), v2 = new THREE.Vector2();
+  function pick(e) {
+    const r = cv.getBoundingClientRect(); v2.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
+    ray.setFromCamera(v2, cam); const h = ray.intersectObjects(burger.children, true)[0]; let o = h && h.object;
+    while (o && !o.userData.layer) o = o.parent; return o && o.userData.layer;
+  }
+  let down = null;
+  cv.addEventListener('pointerdown', e => down = [e.clientX, e.clientY]);
+  cv.addEventListener('pointerup', e => {
+    if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 6) return;
+    const l = pick(e); if (!l) return; exploded ? select(l) : setExploded(true);
+  });
+  cv.addEventListener('pointermove', e => { if (e.buttons === 0) cv.style.cursor = pick(e) ? 'pointer' : 'grab'; });
+ 
+  function resize() { const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); }
+  new ResizeObserver(resize).observe(stage); resize();
+  let visible = true; new IntersectionObserver(([e]) => visible = e.isIntersecting).observe(stage);
+  const clock = new THREE.Clock(), k = reduce ? 1 : .09;
+  (function loop() {
+    requestAnimationFrame(loop); if (!visible) return;
+    const t = clock.getElapsedTime();
+    L.forEach((l, i) => {
+      const g = l.g, ty = exploded ? l.y1 + (reduce ? 0 : Math.sin(t * 1.4 + i) * .07) : l.y0;
+      g.position.y += (ty - g.position.y) * k;
+      g.rotation.y += ((exploded && !reduce ? Math.sin(t * .6 + i) * .18 : 0) - g.rotation.y) * k;
+      const s = l === sel ? 1.06 : 1; g.scale.x += (s - g.scale.x) * k; g.scale.y = g.scale.z = g.scale.x;
+    });
+    const bs = exploded ? 1 : 1.5; burger.scale.x += (bs - burger.scale.x) * k; burger.scale.y = burger.scale.z = burger.scale.x;
+    ctl.update(); renderer.render(scene, cam);
+  })();
+  render();
+})();
+</script>
+</body>
+</html>
